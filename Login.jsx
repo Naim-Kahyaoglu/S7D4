@@ -6,8 +6,11 @@ import axios from 'axios';
 const initialForm = {
   email: '',
   password: '',
-  terms: false, // Kullanıcının onay durumunu tutmak için
+  terms: false,
 };
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
 
 export default function Login() {
   const [form, setForm] = useState(initialForm);
@@ -15,12 +18,27 @@ export default function Login() {
 
   const handleChange = (event) => {
     const { name, type, checked, value } = event.target;
-    const newValue = type === 'checkbox' ? checked : value; // Checkbox için value'yu checked'den al
-    setForm({ ...form, [name]: newValue }); // Form durumunu güncelle
+    const newValue = type === 'checkbox' ? checked : value;
+    setForm({ ...form, [name]: newValue });
   };
 
   const handleSubmit = (event) => {
     event.preventDefault();
+
+    if (!emailRegex.test(form.email)) {
+      alert("Geçerli bir e-posta adresi girin.");
+      return;
+    }
+    
+    if (!passwordRegex.test(form.password)) {
+      alert("Şifre en az 8 karakter, bir büyük harf, bir küçük harf, bir rakam ve bir özel karakter içermelidir.");
+      return;
+    }
+
+    if (!form.terms) {
+      alert("Şartları kabul etmelisiniz.");
+      return;
+    }
 
     axios
       .get('https://6540a96145bedb25bfc247b4.mockapi.io/api/login')
@@ -29,13 +47,15 @@ export default function Login() {
           (item) => item.password === form.password && item.email === form.email
         );
         if (user) {
-          setForm(initialForm); // Başarılı girişten sonra formu sıfırla
-          history.push('/main'); // Ana sayfaya yönlendir
+          setForm(initialForm);
+          history.push('/main');
         } else {
-          history.push('/error'); // Hata sayfasına yönlendir
+          history.push('/error');
         }
       });
   };
+
+  const isFormValid = emailRegex.test(form.email) && passwordRegex.test(form.password) && form.terms;
 
   return (
     <Form onSubmit={handleSubmit}>
@@ -47,7 +67,7 @@ export default function Login() {
           placeholder="Enter your email"
           type="email"
           onChange={handleChange}
-          value={form.email} // Email girdisini formdan al
+          value={form.email}
         />
       </FormGroup>
       <FormGroup>
@@ -55,35 +75,31 @@ export default function Login() {
         <Input
           id="examplePassword"
           name="password"
-          placeholder="Enter your password "
+          placeholder="Enter your password"
           type="password"
           onChange={handleChange}
-          value={form.password} // Şifre girdisini formdan al
+          value={form.password}
         />
       </FormGroup>
 
-      {/* Checkbox Ekle */}
       <FormGroup check>
         <Label check>
           <Input
             type="checkbox"
-            name="terms" // Checkbox için name
-            id="terms" // Checkbox için id
-            checked={form.terms} // Checkbox'ın onay durumunu formdan al
-            onChange={handleChange} // Checkbox durumu değiştiğinde handleChange'i çağır
+            name="terms"
+            id="terms"
+            checked={form.terms}
+            onChange={handleChange}
           />
-          {' I agree to terms of service and privacy policy'}{' '}
-          {/* Checkbox etiket metni */}
+          {' I agree to terms of service and privacy policy'}
         </Label>
       </FormGroup>
 
       <FormGroup className="text-center p-4">
-        <Button color="primary" disabled={!form.terms}>
+        <Button color="primary" disabled={!isFormValid}>
           Sign In
-        </Button>{' '}
-        {/* Checkbox onaylı değilse butonu devre dışı bırak */}
+        </Button>
       </FormGroup>
     </Form>
   );
 }
-//Login Dosyası açıldı. Tekrar- Commit ismi düzenlee.
