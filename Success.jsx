@@ -1,0 +1,1 @@
+//Success dosyası açıldı.
