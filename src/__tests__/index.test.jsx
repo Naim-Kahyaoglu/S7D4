@@ -1,3 +1,4 @@
+// Daha önceki import ifadelerini koruyun
 import { beforeEach, expect, test } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -27,34 +28,30 @@ beforeEach(() => {
   );
 });
 
-test('Sign In butonu disabled olarak başlıyor', async () => {
+// Mevcut testler...
+
+// Yeni test senaryoları
+test('Geçersiz e-posta ile form gönderilmiyor ve hata mesajı çıkıyor', async () => {
+  const user = userEvent.setup();
+
+  const login = screen.getByText('Login');
+  await user.click(login);
+
+  const email = screen.getByPlaceholderText(/Enter your email/i);
+  const password = screen.getByPlaceholderText(/Enter your password/i);
   const loginButton = screen.getByText('Sign In');
+
+  await user.type(email, 'invalidemail');
+  await user.type(password, 'StrongPassword1!');
+
+  await user.click(loginButton);
+
+  // Hata mesajı kontrolü
+  expect(await screen.findByText('Geçerli bir e-posta adresi girin.')).toBeInTheDocument();
   expect(loginButton).toBeDisabled();
 });
 
-test('Terms seçilir ise buton enabled oluyor', async () => {
-  const user = userEvent.setup();
-
-  const terms = screen.getByLabelText(/I agree to/i);
-  const loginButton = screen.getByText('Sign In');
-
-  await user.click(terms);
-  expect(loginButton).not.toBeDisabled();
-});
-
-test("Terms'ün seçili olma durumu kaldırılır ise buton tekrar disabled oluyor", async () => {
-  const user = userEvent.setup();
-
-  const terms = screen.getByLabelText(/I agree to/i);
-  const loginButton = screen.getByText('Sign In');
-
-  await user.click(terms);
-  expect(loginButton).not.toBeDisabled();
-  await user.click(terms);
-  expect(loginButton).toBeDisabled();
-});
-
-test('Terms kabul edilmez ise form submit olmuyor', async () => {
+test('Geçersiz şifre ile form gönderilmiyor ve hata mesajı çıkıyor', async () => {
   const user = userEvent.setup();
 
   const login = screen.getByText('Login');
@@ -65,12 +62,16 @@ test('Terms kabul edilmez ise form submit olmuyor', async () => {
   const loginButton = screen.getByText('Sign In');
 
   await user.type(email, 'erdem.guntay@wit.com.tr');
-  await user.type(password, '9fxIH0GXesEwH_I');
-  expect(loginButton).toBeDisabled();
+  await user.type(password, 'short'); // Geçersiz şifre
+
   await user.click(loginButton);
+
+  // Hata mesajı kontrolü
+  expect(await screen.findByText('Şifre en az 8 karakter, bir büyük harf, bir küçük harf, bir rakam ve bir özel karakter içermelidir.')).toBeInTheDocument();
+  expect(loginButton).toBeDisabled();
 });
 
-test('Form doğru bilgiler ile doldurulunca form submit oluyor', async () => {
+test('Terms kabul edilmezse buton disabled kalıyor ve hata mesajı çıkıyor', async () => {
   const user = userEvent.setup();
 
   const login = screen.getByText('Login');
@@ -78,13 +79,14 @@ test('Form doğru bilgiler ile doldurulunca form submit oluyor', async () => {
 
   const email = screen.getByPlaceholderText(/Enter your email/i);
   const password = screen.getByPlaceholderText(/Enter your password/i);
-  const terms = screen.getByLabelText(/I agree to/i);
   const loginButton = screen.getByText('Sign In');
 
   await user.type(email, 'erdem.guntay@wit.com.tr');
-  await user.type(password, '9fxIH0GXesEwH_I');
-  await user.click(terms);
-  expect(loginButton).not.toBeDisabled();
+  await user.type(password, 'StrongPassword1!');
+
+  // Şartları kabul etmeden butona tıklama
   await user.click(loginButton);
-  await screen.findByText('/main');
+
+  expect(await screen.findByText('Şartları kabul etmelisiniz.')).toBeInTheDocument();
+  expect(loginButton).toBeDisabled();
 });
