@@ -1,1 +1,1 @@
-//Success dosyası açıldı.
+//Success dosyası açıldı.Tekrar- Commit ismi düzenleme.
